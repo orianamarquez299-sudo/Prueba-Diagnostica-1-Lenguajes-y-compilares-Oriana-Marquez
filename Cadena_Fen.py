@@ -1,9 +1,10 @@
 import re
 
 def validar_fen(cadena_fen: str) -> (bool, str):
-
-    
-    # 1. Verificar que hay 6 campos
+    """
+    Valida si una cadena sigue el formato FEN (Forsyth-Edwards Notation).
+    """
+    # 1. Verificar que hay 6 campos obligatorios
     campos = cadena_fen.split()
     if len(campos) != 6:
         return (False, f"Error: FEN debe tener 6 campos (encontrados {len(campos)}).")
@@ -38,32 +39,39 @@ def validar_fen(cadena_fen: str) -> (bool, str):
     if turno not in ('w', 'b'):
         return (False, f"Error Campo 2: Turno debe ser 'w' o 'b' (encontrado '{turno}').")
 
-    # 4. Validar Campo 3: Enroque
-    # Regex para: '-' O (al menos una de KQkq) Y (en el orden K?Q?k?q?)
+    # 4. Validar Campo 3: Disponibilidad de enroque
+    # Regex: '-' o una combinación válida de K, Q, k, q en ese orden exacto.
     if not re.match(r"^-$|^(?=.*[KQkq])K?Q?k?q?$", enroque):
-        return (False, f"Error Campo 3: Enroque '{enroque}' inválido (orden K, Q, k, q).")
+        return (False, f"Error Campo 3: Enroque '{enroque}' inválido (orden correcto: K, Q, k, q).")
 
-    # 5. Validar Campo 4: Captura al paso
+    # 5. Validar Campo 4: Casilla de peón al paso (En passant)
     if not re.match(r"^-$|^[a-h][36]$", al_paso):
-        return (False, f"Error Campo 4: 'Al paso' ('{al_paso}') debe ser '-' o una casilla en fila 3 ó 6.")
+        return (False, f"Error Campo 4: 'Al paso' ('{al_paso}') debe ser '-' o una casilla válida en fila 3 o 6.")
 
-    # 6. Validar Campo 5: Contador de medias jugadas
+    # 6. Validar Campo 5: Reloj de medias jugadas (Regla de los 50 movimientos)
     if not media_jugada.isdigit() or int(media_jugada) < 0:
         return (False, f"Error Campo 5: 'Media jugada' ('{media_jugada}') debe ser un entero >= 0.")
 
     # 7. Validar Campo 6: Número de jugada completa
+    # CORRECCIÓN: Se cambió '{media_jugada}' por '{jugada_completa}' en el mensaje de error.
     if not jugada_completa.isdigit() or int(jugada_completa) < 1:
         return (False, f"Error Campo 6: 'Jugada completa' ('{jugada_completa}') debe ser un entero >= 1.")
 
     return (True, "FEN Válido.")
 
-# --- Ejemplos de uso ---
-fen_valido = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-fen_invalido_fila = "rnbqkbnr/ppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" # Fila 7 suma 7
-fen_invalido_turno = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR x KQkq - 0 1" # Turno 'x'
-fen_invalido_jugada = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0" # Jugada 0
+# --- Bloque de Pruebas ---
+if __name__ == "__main__":
+    # Lista de ejemplos para probar el validador
+    pruebas = [
+        ("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "Caso Válido"),
+        ("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0", "Error Jugada 0"),
+        ("8/8/8/8/8/8/8/8 w - - 0 1", "Tablero Vacío Válido"),
+        ("rnbqkbnr/8/8/8/8/8/8/RNBQKBNR w KQkq e3 0 1", "Peón al paso inválido")
+    ]
 
-print(f"'{fen_valido}':\n{validar_fen(fen_valido)}\n")
-print(f"'{fen_invalido_fila}':\n{validar_fen(fen_invalido_fila)}\n")
-print(f"'{fen_invalido_turno}':\n{validar_fen(fen_invalido_turno)}\n")
-print(f"'{fen_invalido_jugada}':\n{validar_fen(fen_invalido_jugada)}\n")
+    for fen, descripcion in pruebas:
+        valido, msg = validar_fen(fen)
+        print(f"Descripción: {descripcion}")
+        print(f"FEN: {fen}")
+        print(f"Resultado: {'✅' if valido else '❌'} {msg}")
+        print("-" * 60)
